@@ -14,14 +14,14 @@ func NewPlayerStatus(obj dbus.BusObject) *PlayerStatus {
 	// Get Playback Status from mpris
 	reply, err := obj.GetProperty("org.mpris.MediaPlayer2.Player.PlaybackStatus")
 	if err != nil {
-		panic(err)
+		return nil
 	}
 	status := reply.Value().(string)
 
 	// Get Metadata from mpris
 	reply, err = obj.GetProperty("org.mpris.MediaPlayer2.Player.Metadata")
 	if err != nil {
-		panic(err)
+		return nil
 	}
 	meta := reply.Value().(map[string]dbus.Variant)
 	// Extract Artist and Title from metadata
