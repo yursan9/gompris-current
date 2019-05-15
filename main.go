@@ -15,7 +15,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/godbus/dbus"
@@ -24,7 +24,8 @@ import (
 func main() {
 	// Get player name from command line args
 	if len(os.Args) < 2 {
-		log.Fatal("Need media player name. Usage: mpris-current [player name]")
+		fmt.Fprintln(os.Stderr, "Need media player name. Usage: mpris-current [player name]")
+		os.Exit(1)
 	}
 	player := os.Args[1]
 
@@ -40,8 +41,12 @@ func main() {
 	// Make new player status based on dbus object
 	obj := conn.Object("org.mpris.MediaPlayer2."+player, "/org/mpris/MediaPlayer2")
 	status := NewPlayerStatus(obj)
+	if status == nil {
+		fmt.Fprintln(os.Stderr, "Can't connect to dbus object", obj.Destination())
+		fmt.Fprintln(os.Stderr, "Make sure", player, "is running")
+		os.Exit(1)
+	}
 
-	log.Println("Subscibe to org.freedesktop.DBus.Properties.PropertiesChanged signal")
 	// Subscibe to PropertiesChanged signal
 	conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0,
 		"type='signal',path='/org/mpris/MediaPlayer2',interface='org.freedesktop.DBus.Properties',member=PropertiesChanged")
@@ -50,8 +55,8 @@ func main() {
 	c := make(chan *dbus.Signal, 10)
 	conn.Signal(c)
 
-	log.Println("Start monitoring signal for org.mpris.MediaPlayer2." + player)
-	log.Println("Press Ctrl+C to quit...")
+	fmt.Println("Start monitoring signal for org.mpris.MediaPlayer2." + player)
+	fmt.Println("Press Ctrl+C to quit...")
 	// Loop over the channel
 	for v := range c {
 		// Get signal's message body
